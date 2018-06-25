@@ -9,12 +9,13 @@ import (
 	"container/heap"
 
 	"github.com/coreos/bbolt"
-	"github.com/lightningnetwork/lightning-onion"
 	"github.com/lightningnetwork/lnd/channeldb"
 	"github.com/lightningnetwork/lnd/lnwire"
 	"github.com/roasbeef/btcd/btcec"
 	"github.com/roasbeef/btcd/chaincfg/chainhash"
 	"github.com/roasbeef/btcutil"
+	"strconv"
+	"github.com/lightningnetwork/lightning-onion"
 )
 
 const (
@@ -22,7 +23,7 @@ const (
 	// Any potential paths found that lie above this limit will be rejected
 	// with an error. This value is computed using the current fixed-size
 	// packet length of the Sphinx construction.
-	HopLimit = 20
+	HopLimit = 100
 
 	// infinity is used as a starting distance in our shortest path search.
 	infinity = math.MaxInt64
@@ -513,6 +514,7 @@ func findPath(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 	// We'll use this map as a series of "previous" hop pointers. So to get
 	// to `Vertex` we'll take the edge that it's mapped to within `prev`.
 	prev := make(map[Vertex]edgeWithPrev)
+	channelhopmap := make(map[string]edgeWithPrev)
 
 	// processEdge is a helper closure that will be used to make sure edges
 	// satisfy our specific requirements.
@@ -521,21 +523,54 @@ func findPath(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 
 		v := Vertex(edge.Node.PubKeyBytes)
 
+		log.Infof("channelhoppp %v", ChannelHop{
+			ChannelEdgePolicy: edge,
+			Capacity:          bandwidth.ToSatoshis(),
+		})
+
+		log.Infof("gggggttttt %v %v %x", edge.ChannelID, pivot.String(), edge.ChannelID)
+
+		channelhopmap[pivot.String() + strconv.FormatUint(edge.ChannelID,16)] = edgeWithPrev{
+			edge: &ChannelHop{
+				ChannelEdgePolicy: edge,
+				Capacity:          bandwidth.ToSatoshis(),
+			},
+			prevNode: pivot,
+		}
+
+		//temp :=  make(map[string]edgeWithPrev)
+		//
+		//temp[strconv.FormatUint(edge.ChannelID,16)] = edgeWithPrev{
+		//	edge: &ChannelHop{
+		//		ChannelEdgePolicy: edge,
+		//		Capacity:          bandwidth.ToSatoshis(),
+		//	},
+		//	prevNode: pivot,
+		//}
+		//
+		//channelhopmap[pivot.String()] = temp
+
 		// If the edge is currently disabled, then we'll stop here, as
 		// we shouldn't attempt to route through it.
 		edgeFlags := lnwire.ChanUpdateFlag(edge.Flags)
 		if edgeFlags&lnwire.ChanUpdateDisabled != 0 {
+			log.Infof("channels nulllll %v %v", edgeFlags ,lnwire.ChanUpdateDisabled)
 			return
 		}
 
 		// If this vertex or edge has been black listed, then we'll skip
 		// exploring this edge.
 		if _, ok := ignoredNodes[v]; ok {
+			log.Infof("ignoredNodes")
 			return
 		}
 		if _, ok := ignoredEdges[edge.ChannelID]; ok {
+			log.Infof("ignoredEdges")
 			return
 		}
+
+
+
 
 		// Compute the tentative distance to this new channel/edge which
 		// is the distance to our pivot node plus the weight of this
@@ -550,6 +585,8 @@ func findPath(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 		// min-htlc amount to our relaxation condition.
 		if tempDist < distance[v].dist && bandwidth >= amt &&
 			amt >= edge.MinHTLC && edge.TimeLockDelta != 0 {
+
+
 
 			distance[v] = nodeWithDist{
 				dist: tempDist,
@@ -658,6 +695,7 @@ func findPath(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 		// backwards from this hop via the prev pointer for this hop
 		// within the prevHop map.
 		pathEdges = append(pathEdges, prev[prevNode].edge)
+		log.Infof("node edgeeeeee %v", prev[prevNode].edge.ChannelID)
 
 		prevNode = Vertex(prev[prevNode].prevNode)
 	}
@@ -678,6 +716,40 @@ func findPath(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 	for i := 0; i < numEdges/2; i++ {
 		pathEdges[i], pathEdges[numEdges-i-1] = pathEdges[numEdges-i-1], pathEdges[i]
 	}
+
+	pathEdges2 := make([]*ChannelHop, 0, len(prev))
+
+	//pathEdges2 = append(pathEdges2, channelhopmap[1540415790579712])
+	//pathEdges2 = append(pathEdges2, channelhopmap[1549211883601920])
+	//pathEdges2 = append(pathEdges2, channelhopmap[1553609930113024])
+	//pathEdges2 = append(pathEdges2, channelhopmap[1562406023135232])
+
+
+
+	temp1 := channelhopmap["036c235673cc67860e9f1ca149127aad0008dfc1d054e2fd312b0d03751b1e28fc" + "5790000010000"].edge
+	temp3 := channelhopmap["02f53b9c8c5000d22e2d30ab4a25b67f065bd5805a2f23dc7f2e49884e50186735" + "5810000010000"].edge
+	temp4 := channelhopmap["03cce0789ca4e9ab23b4410aeee932f7f74a23f182f3a92f20a38f2c457ede53d5" + "5850000010000"].edge
+	temp2 := channelhopmap["0282189b5cc52383bca0305ac909fd0d588bdeb4e02575c4a941ecde0c3e009945" + "58d0000010000"].edge
+
+
+	pathEdges2 = append(pathEdges2, temp1)
+	pathEdges2 = append(pathEdges2, temp3)
+	pathEdges2 = append(pathEdges2, temp4)
+	pathEdges2 = append(pathEdges2, temp2)
+
+	//
+	//
+	//
+	log.Infof("0nodeee2 %v" , temp1)
+	log.Infof("0nodeee1 %v" , temp2)
+
+
+
+	log.Infof("2nodeee1 %v" , pathEdges[0])
+	//log.Infof("2nodeee2 %v" , pathEdges[1])
+
+	log.Infof("pathhhhhh %x" , pathEdges)
+	log.Infof("pathhhhhh2 %x" , pathEdges2)
 
 	return pathEdges, nil
 }
@@ -748,6 +820,7 @@ func findPaths(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 			// and loopless.
 			ignoredEdges = make(map[uint64]struct{})
 			ignoredVertexes = make(map[Vertex]struct{})
+			log.Infof("ignoredEdgessssss %v", ignoredEdges)
 
 			// Our spur node is the i-th node in the prior shortest
 			// path, and our root path will be all nodes in the
@@ -765,6 +838,7 @@ func findPaths(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 				// directly _after_ our spur node from the
 				// graph so we don't repeat paths.
 				if len(path) > i+1 && isSamePath(rootPath, path[:i+1]) {
+					log.Infof("isSamePathhhhhh")
 					ignoredEdges[path[i+1].ChannelID] = struct{}{}
 				}
 			}
@@ -785,6 +859,7 @@ func findPaths(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 			// the Vertexes (other than the spur path) within the
 			// root path removed, we'll attempt to find another
 			// shortest path from the spur node to the destination.
+			log.Infof("ignoredEdgessssss22 %v", ignoredEdges)
 			spurPath, err := findPath(
 				tx, graph, nil, spurNode, target,
 				ignoredVertexes, ignoredEdges, amt,
@@ -794,8 +869,10 @@ func findPaths(tx *bolt.Tx, graph *channeldb.ChannelGraph,
 			// If we weren't able to find a path, we'll continue to
 			// the next round.
 			if IsError(err, ErrNoPathFound) {
+				log.Infof("loopppppppp")
 				continue
 			} else if err != nil {
+				log.Infof("loopppppppp2")
 				return nil, err
 			}
 

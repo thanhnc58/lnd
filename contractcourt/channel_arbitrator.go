@@ -364,11 +364,14 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 		nextState ArbitratorState
 		closeTx   *wire.MsgTx
 	)
+	log.Infof("tessssssss44444")
+	fmt.Print("tesss333333")
 	switch c.state {
 
 	// If we're in the default state, then we'll check our set of actions
 	// to see if while we were down, conditions have changed.
 	case StateDefault:
+		log.Infof("tessssssss6666666")
 		log.Debugf("ChannelArbitrator(%v): new block (height=%v) "+
 			"examining active HTLC's", c.cfg.ChanPoint,
 			triggerHeight)
@@ -378,6 +381,51 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 		// claims on behalf of the channel contract that we're
 		// arbitrating for.
 		chainActions := c.checkChainActions(triggerHeight, trigger)
+
+		//log.Infof("tesssssssstriggerrr %v", trigger)
+		//log.Infof("tesssssssslen(chainActions) %v", len(chainActions))
+		//
+		//contractResolutions, err := c.log.FetchContractResolutions()
+		//
+		//log.Infof("StateDefault1 %v", chainActions)
+		//log.Infof("StateDefault2 %v", contractResolutions)
+		//log.Infof("StateDefault3 %v", triggerHeight)
+		//log.Infof("StateDefault4 %v", err)
+		//
+		//
+		//
+		//var (
+		//	msgsToSend []ResolutionMsg
+		//)
+		//
+		//failureMsg := &lnwire.FailPermanentChannelFailure{}
+		//
+		//for _, htlc := range c.activeHTLCs.outgoingHTLCs {
+		//
+		//	if htlc.RefundTimeout - triggerHeight <= 100 {
+		//		log.Infof("StateDefault55")
+		//		failMsg := ResolutionMsg{
+		//			SourceChan: c.cfg.ShortChanID,
+		//			HtlcIndex:  htlc.HtlcIndex,
+		//			Failure:    failureMsg,
+		//		}
+		//
+		//		msgsToSend = append(msgsToSend, failMsg)
+		//
+		//		err = c.cfg.DeliverResolutionMsg(msgsToSend...)
+		//		log.Infof("StateDefault55")
+		//		if err != nil {
+		//			// TODO(roasbeef): make sure packet sends are idempotent
+		//			log.Errorf("unable to send pkts: %v", err)
+		//			return StateError, closeTx, err
+		//		}
+		//	}
+		//}
+		//
+		//log.Infof("StateDefault5 %v", msgsToSend)
+		//
+		//
+
 
 		// If there are no actions to be made, then we'll remain in the
 		// default state. If this isn't a self initiated event (we're
@@ -389,6 +437,10 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 			return StateDefault, closeTx, nil
 		}
 
+
+
+
+		log.Infof("tessssssss5555555")
 		// Otherwise, we'll log that we checked the HTLC actions as the
 		// commitment transaction has already been broadcast.
 		log.Tracef("ChannelArbitrator(%v): logging chain_actions=%v",
@@ -397,6 +449,7 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 				return spew.Sdump(chainActions)
 			}))
 		if err := c.log.LogChainActions(chainActions); err != nil {
+			log.Infof("tessssssss00005555555")
 			return StateError, closeTx, err
 		}
 
@@ -409,8 +462,10 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 		// next state, as we still need to broadcast the commitment
 		// transaction.
 		case chainTrigger:
+			log.Infof("tessssssss11115555555")
 			fallthrough
 		case userTrigger:
+			log.Infof("tessssssss22225555555")
 			nextState = StateBroadcastCommit
 
 		// Otherwise, if this state advance was triggered by a
@@ -418,11 +473,13 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 		// straight to the state where the contract has already been
 		// closed.
 		case localCloseTrigger:
+			log.Infof("tessssssss33325555555")
 			log.Errorf("ChannelArbitrator(%v): unexpected local "+
 				"commitment confirmed while in StateDefault",
 				c.cfg.ChanPoint)
 			fallthrough
 		case remoteCloseTrigger:
+			log.Infof("tessssssss444425555555")
 			nextState = StateContractClosed
 		}
 
@@ -506,6 +563,7 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 		// First, we'll fetch our chain actions, and both sets of
 		// resolutions so we can process them.
 		chainActions, err := c.log.FetchChainActions()
+		log.Infof("StateContractCloseddddddddd")
 		if err != nil {
 			log.Errorf("unable to fetch chain actions: %v", err)
 			return StateError, closeTx, err
@@ -555,6 +613,17 @@ func (c *ChannelArbitrator) stateStep(triggerHeight uint32,
 		htlcResolvers, pktsToSend, err := c.prepContractResolutions(
 			chainActions, contractResolutions, triggerHeight,
 		)
+
+		log.Infof("infoooooooooo1 %v", chainActions)
+		log.Infof("infoooooooooo2 %v", contractResolutions)
+		log.Infof("infoooooooooo3 %v", triggerHeight)
+		log.Infof("infoooooooooo4 %v", pktsToSend)
+		log.Infof("infoooooooooo5 %v", htlcResolvers)
+		log.Infof("infoooooooooo6 %v", err)
+
+
+
+
 		if err != nil {
 			log.Errorf("ChannelArbitrator(%v): unable to "+
 				"resolve contracts: %v", c.cfg.ChanPoint, err)
@@ -787,7 +856,7 @@ func (c *ChannelArbitrator) checkChainActions(height uint32,
 	// TODO(roasbeef): would need to lock channel? channel totem?
 	//  * race condition if adding and we broadcast, etc
 	//  * or would make each instance sync?
-
+	log.Infof("goinnnnnnnn")
 	log.Debugf("ChannelArbitrator(%v): checking chain actions at "+
 		"height=%v", c.cfg.ChanPoint, height)
 
@@ -800,12 +869,15 @@ func (c *ChannelArbitrator) checkChainActions(height uint32,
 	for _, htlc := range c.activeHTLCs.outgoingHTLCs {
 		// If any of our HTLC's triggered an on-chain action, then we
 		// can break early.
+		log.Infof("goinnnnnnnnt0")
 		if haveChainActions {
+			log.Infof("goinnnnnnnnt1")
 			break
 		}
 
 		// We'll need to go on-chain for an outgoing HTLC if it was
 		// never resolved downstream, and it's "close" to timing out.
+		log.Infof("goinnnnnnnnt2")
 		haveChainActions = haveChainActions || c.shouldGoOnChain(
 			htlc.RefundTimeout, c.cfg.BroadcastDelta, height,
 		)
@@ -814,6 +886,7 @@ func (c *ChannelArbitrator) checkChainActions(height uint32,
 		// If any of our HTLC's triggered an on-chain action, then we
 		// can break early.
 		if haveChainActions {
+			log.Infof("goinnnnnnnnt3")
 			break
 		}
 
@@ -822,8 +895,10 @@ func (c *ChannelArbitrator) checkChainActions(height uint32,
 		// ensure that we claim the funds that our rightfully ours
 		// on-chain.
 		if _, ok := c.cfg.PreimageDB.LookupPreimage(htlc.RHash[:]); !ok {
+			log.Infof("goinnnnnnnnt4")
 			continue
 		}
+		log.Infof("goinnnnnnnnt5")
 		haveChainActions = haveChainActions || c.shouldGoOnChain(
 			htlc.RefundTimeout, redeemCutoff, height,
 		)
@@ -834,6 +909,7 @@ func (c *ChannelArbitrator) checkChainActions(height uint32,
 	// if we're going to broadcast the commitment (or the remote party) did
 	// we're *forced* to act on each HTLC.
 	if !haveChainActions && trigger == chainTrigger {
+		log.Infof("goinnnnnnnnt6")
 		log.Tracef("ChannelArbitrator(%v): no actions to take at "+
 			"height=%v", c.cfg.ChanPoint, height)
 		return actionMap
@@ -844,12 +920,18 @@ func (c *ChannelArbitrator) checkChainActions(height uint32,
 	// a timeout (then cancel backwards), cancel them backwards
 	// immediately, or watch them as they're still active contracts.
 	for _, htlc := range c.activeHTLCs.outgoingHTLCs {
+		fmt.Printf("tessttt222222222")
+		log.Infof("tessssss123456")
 		switch {
 		// If the HTLC is dust, then we can cancel it backwards
 		// immediately as there's no matching contract to arbitrate
 		// on-chain. We know the HTLC is dust, if the OutputIndex
 		// negative.
+
+
+		//this is important
 		case htlc.OutputIndex < 0:
+			log.Infof("thanh testt %v", htlc.OutputIndex)
 			log.Tracef("ChannelArbitrator(%v): immediately "+
 				"failing dust htlc=%x", c.cfg.ChanPoint,
 				htlc.RHash[:])
@@ -1004,6 +1086,7 @@ func (c *ChannelArbitrator) prepContractResolutions(htlcActions ChainActionMap,
 		// If we can fail an HTLC immediately (an outgoing HTLC with no
 		// contract), then we'll assemble an HTLC fail packet to send.
 		case HtlcFailNowAction:
+			log.Infof("packagetosenddd1")
 			for _, htlc := range htlcs {
 				failMsg := ResolutionMsg{
 					SourceChan: c.cfg.ShortChanID,
@@ -1017,6 +1100,7 @@ func (c *ChannelArbitrator) prepContractResolutions(htlcActions ChainActionMap,
 		// If we can claim this HTLC, we'll create an HTLC resolver to
 		// claim the HTLC (second-level or directly), then add the pre
 		case HtlcClaimAction:
+			log.Infof("packagetosenddd2")
 			for _, htlc := range htlcs {
 				htlcOp := wire.OutPoint{
 					Hash:  commitHash,
@@ -1046,6 +1130,7 @@ func (c *ChannelArbitrator) prepContractResolutions(htlcActions ChainActionMap,
 		// proper resolver to do so, who will then cancel the packet
 		// backwards.
 		case HtlcTimeoutAction:
+			log.Infof("packagetosenddd3")
 			for _, htlc := range htlcs {
 				htlcOp := wire.OutPoint{
 					Hash:  commitHash,
@@ -1073,6 +1158,7 @@ func (c *ChannelArbitrator) prepContractResolutions(htlcActions ChainActionMap,
 		// we'll create an incoming resolver to redeem the HTLC if we
 		// learn of the pre-image, or let the remote party time out.
 		case HtlcIncomingWatchAction:
+			log.Infof("packagetosenddd4")
 			for _, htlc := range htlcs {
 				htlcOp := wire.OutPoint{
 					Hash:  commitHash,
@@ -1107,6 +1193,7 @@ func (c *ChannelArbitrator) prepContractResolutions(htlcActions ChainActionMap,
 		// launch a resolver to watch for the pre-image (and settle
 		// backwards), or just timeout.
 		case HtlcOutgoingWatchAction:
+			log.Infof("packagetosenddd5")
 			for _, htlc := range htlcs {
 				htlcOp := wire.OutPoint{
 					Hash:  commitHash,

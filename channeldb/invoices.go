@@ -427,6 +427,11 @@ func deserializeInvoice(r io.Reader) (*Invoice, error) {
 }
 
 func settleInvoice(invoices *bolt.Bucket, invoiceNum []byte) error {
+
+	log.Infof("this is settleInvoiceeeeeeee")
+	fmt.Print("thanhtesss")
+	//time.Sleep(600000 * time.Millisecond)
+	//time.Sleep(30000 * time.Millisecond)
 	invoice, err := fetchInvoice(invoiceNum, invoices)
 	if err != nil {
 		return err

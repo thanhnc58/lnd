@@ -364,6 +364,7 @@ func PayDescsFromRemoteLogUpdates(chanID lnwire.ShortChannelID, height uint64,
 			copy(pd.OnionBlob[:], wireMsg.OnionBlob[:])
 
 		case *lnwire.UpdateFulfillHTLC:
+			walletLog.Infof("UpdateFulfillHTLC1111")
 			pd = PaymentDescriptor{
 				RPreimage:   wireMsg.PaymentPreimage,
 				ParentIndex: wireMsg.ID,
@@ -376,6 +377,7 @@ func PayDescsFromRemoteLogUpdates(chanID lnwire.ShortChannelID, height uint64,
 			}
 
 		case *lnwire.UpdateFailHTLC:
+			walletLog.Infof("UpdateFailHTLC1111")
 			pd = PaymentDescriptor{
 				ParentIndex: wireMsg.ID,
 				EntryType:   Fail,
@@ -568,12 +570,14 @@ func (c *commitment) populateHtlcIndexes() error {
 		// If this is our commitment transaction, and this is a dust
 		// output then we mark it as such using a -1 index.
 		case c.isOurs && isDust:
+
 			htlc.localOutputIndex = -1
 
 		// If this is the commitment transaction of the remote party,
 		// and this is a dust output then we mark it as such using a -1
 		// index.
 		case !c.isOurs && isDust:
+			walletLog.Infof("outputindexxxxxx")
 			htlc.remoteOutputIndex = -1
 
 		// If this is our commitment transaction, then we'll need to
@@ -655,10 +659,14 @@ func (c *commitment) toDiskCommit(ourCommit bool) *channeldb.ChannelCommitment {
 		Htlcs:           make([]channeldb.HTLC, 0, numHtlcs),
 	}
 
+	//thanh
 	for _, htlc := range c.outgoingHTLCs {
 		outputIndex := htlc.localOutputIndex
+		walletLog.Infof("thanhtesstt")
 		if !ourCommit {
+			walletLog.Infof("thanhtesstt11")
 			outputIndex = htlc.remoteOutputIndex
+			walletLog.Infof("thanhtesstt11 %v", outputIndex)
 		}
 
 		h := channeldb.HTLC{
@@ -1532,6 +1540,7 @@ func (lc *LightningChannel) logUpdateToPayDesc(logUpdate *channeldb.LogUpdate,
 	// from the remote party's update log so we can retrieve the same
 	// PaymentDescriptor that SettleHTLC would produce.
 	case *lnwire.UpdateFulfillHTLC:
+		walletLog.Infof("UpdateFulfillHTLC2")
 		ogHTLC := remoteUpdateLog.lookupHtlc(wireMsg.ID)
 
 		pd = &PaymentDescriptor{
@@ -1549,7 +1558,7 @@ func (lc *LightningChannel) logUpdateToPayDesc(logUpdate *channeldb.LogUpdate,
 	// removal height for the remote commitment.
 	case *lnwire.UpdateFailHTLC:
 		ogHTLC := remoteUpdateLog.lookupHtlc(wireMsg.ID)
-
+		walletLog.Infof("UpdateFailHTLC2222")
 		pd = &PaymentDescriptor{
 			Amount:                   ogHTLC.Amount,
 			RHash:                    ogHTLC.RHash,
@@ -2865,6 +2874,7 @@ func (lc *LightningChannel) createCommitDiff(
 			continue
 
 		case Settle:
+			walletLog.Infof("UpdateFulfillHTLC3")
 			logUpdate.UpdateMsg = &lnwire.UpdateFulfillHTLC{
 				ChanID:          chanID,
 				ID:              pd.ParentIndex,
@@ -2872,6 +2882,7 @@ func (lc *LightningChannel) createCommitDiff(
 			}
 
 		case Fail:
+			walletLog.Infof("UpdateFailHTLC3333")
 			logUpdate.UpdateMsg = &lnwire.UpdateFailHTLC{
 				ChanID: chanID,
 				ID:     pd.ParentIndex,
@@ -2906,6 +2917,7 @@ func (lc *LightningChannel) createCommitDiff(
 	// With the set of log updates mapped into wire messages, we'll now
 	// convert the in-memory commit into a format suitable for writing to
 	// disk.
+	walletLog.Infof("diskcommitttt")
 	diskCommit := newCommit.toDiskCommit(false)
 
 	return &channeldb.CommitDiff{
@@ -4209,6 +4221,7 @@ func (lc *LightningChannel) ReceiveRevocation(revMsg *lnwire.RevokeAndAck) (
 			addUpdates = append(addUpdates, logUpdate)
 
 		case Settle:
+			walletLog.Infof("UpdateFulfillHTLC4")
 			logUpdate.UpdateMsg = &lnwire.UpdateFulfillHTLC{
 				ChanID:          chanID,
 				ID:              pd.ParentIndex,
@@ -4217,6 +4230,7 @@ func (lc *LightningChannel) ReceiveRevocation(revMsg *lnwire.RevokeAndAck) (
 			settleFailUpdates = append(settleFailUpdates, logUpdate)
 
 		case Fail:
+			walletLog.Infof("UpdateFailHTLC4444")
 			logUpdate.UpdateMsg = &lnwire.UpdateFailHTLC{
 				ChanID: chanID,
 				ID:     pd.ParentIndex,

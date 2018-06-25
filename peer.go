@@ -312,6 +312,7 @@ func (p *peer) Start() error {
 // channels returned by the database.
 func (p *peer) loadActiveChannels(chans []*channeldb.OpenChannel) error {
 	for _, dbChan := range chans {
+
 		lnChan, err := lnwallet.NewLightningChannel(
 			p.server.cc.signer, p.server.witnessBeacon, dbChan,
 		)
@@ -972,6 +973,7 @@ out:
 			isChanUpdate = true
 			targetChan = msg.ChanID
 		case *lnwire.UpdateFulfillHTLC:
+			peerLog.Infof("UpdateFulfillHTLC4")
 			isChanUpdate = true
 			targetChan = msg.ChanID
 		case *lnwire.UpdateFailMalformedHTLC:

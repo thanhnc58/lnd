@@ -1110,6 +1110,7 @@ func (l *channelLink) handleDownStreamPkt(pkt *htlcPacket, isReProcess bool) {
 		l.cfg.Peer.SendMessage(htlc, false)
 
 	case *lnwire.UpdateFulfillHTLC:
+		log.Infof("UpdateFulfillHTLC7")
 		// If hodl.SettleOutgoing mode is active, we exit early to
 		// simulate arbitrary delays between the switch adding the
 		// SETTLE to the mailbox, and the HTLC being added to the
@@ -1227,6 +1228,7 @@ func (l *channelLink) handleUpstreamMsg(msg lnwire.Message) {
 			"assigning index: %v", msg.PaymentHash[:], index)
 
 	case *lnwire.UpdateFulfillHTLC:
+		log.Infof("UpdateFulfillHTLC8")
 		pre := msg.PaymentPreimage
 		idx := msg.ID
 		if err := l.channel.ReceiveHTLCSettle(pre, idx); err != nil {
@@ -1929,6 +1931,7 @@ func (l *channelLink) processRemoteSettleFails(fwdPkg *channeldb.FwdPkg,
 
 			// Fetch the reason the HTLC was cancelled so we can
 			// continue to propagate it.
+			log.Infof("UpdateFailHTLC9999")
 			failPacket := &htlcPacket{
 				outgoingChanID: l.ShortChanID(),
 				outgoingHTLCID: pd.ParentIndex,
@@ -2237,6 +2240,8 @@ func (l *channelLink) processRemoteAdds(fwdPkg *channeldb.FwdPkg,
 				return false
 			}
 
+
+			log.Infof("delay for 30sssssss")
 			// Notify the invoiceRegistry of the invoices we just
 			// settled with this latest commitment update.
 			err = l.cfg.Registry.SettleInvoice(invoiceHash)
@@ -2260,6 +2265,9 @@ func (l *channelLink) processRemoteAdds(fwdPkg *channeldb.FwdPkg,
 
 			// HTLC was successfully settled locally send
 			// notification about it remote peer.
+			var key [32]byte
+			copy(key[:], "wresdt124s3d")
+
 			l.cfg.Peer.SendMessage(&lnwire.UpdateFulfillHTLC{
 				ChanID:          l.ChanID(),
 				ID:              pd.HtlcIndex,
@@ -2537,6 +2545,8 @@ func (l *channelLink) handleBatchFwdErrs(errChan chan error) {
 // peer from which HTLC was received.
 func (l *channelLink) sendHTLCError(htlcIndex uint64, failure lnwire.FailureMessage,
 	e ErrorEncrypter, sourceRef *channeldb.AddRef) {
+
+	log.Infof("update failllllllllllllll")
 
 	reason, err := e.EncryptFirstHop(failure)
 	if err != nil {

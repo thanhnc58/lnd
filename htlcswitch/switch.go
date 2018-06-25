@@ -733,6 +733,7 @@ func (s *Switch) handleLocalDispatch(pkt *htlcPacket) error {
 	case *lnwire.UpdateAddHTLC:
 		// Try to find links by node destination.
 		s.indexMtx.RLock()
+		log.Infof("destNodeeee %x", pkt.destNode)
 		links, err := s.getLinks(pkt.destNode)
 		if err != nil {
 			s.indexMtx.RUnlock()
@@ -800,6 +801,7 @@ func (s *Switch) handleLocalDispatch(pkt *htlcPacket) error {
 	// user payment and return successful response.
 	case *lnwire.UpdateFulfillHTLC:
 		// Notify the user that his payment was successfully proceed.
+		log.Infof("UpdateFulfillHTLC5")
 		payment.err <- nil
 		payment.response <- pkt
 		payment.preimage <- htlc.PaymentPreimage
@@ -808,6 +810,7 @@ func (s *Switch) handleLocalDispatch(pkt *htlcPacket) error {
 	// We've just received a fail update which means we can finalize the
 	// user payment and return fail response.
 	case *lnwire.UpdateFailHTLC:
+		log.Infof("UpdateFailHTLC6666")
 		payment.err <- s.parseFailedPayment(payment, pkt, htlc)
 		payment.response <- pkt
 		payment.preimage <- zeroPreimage
@@ -1027,6 +1030,7 @@ func (s *Switch) handlePacketForward(packet *htlcPacket) error {
 	case *lnwire.UpdateFailHTLC, *lnwire.UpdateFulfillHTLC:
 		// If the source of this packet has not been set, use the
 		// circuit map to lookup the origin.
+		log.Infof("UpdateFailHTLC7777")
 		circuit, err := s.closeCircuit(packet)
 		if err != nil {
 			return err
@@ -1245,8 +1249,10 @@ func (s *Switch) teardownCircuit(pkt *htlcPacket) error {
 	var pktType string
 	switch htlc := pkt.htlc.(type) {
 	case *lnwire.UpdateFulfillHTLC:
+		log.Infof("UpdateFulfillHTLC6")
 		pktType = "SETTLE"
 	case *lnwire.UpdateFailHTLC:
+		log.Infof("UpdateFailHTLC8888")
 		pktType = "FAIL"
 	default:
 		err := fmt.Errorf("cannot tear down packet of type: %T", htlc)
@@ -1722,6 +1728,7 @@ func (s *Switch) AddLink(link ChannelLink) error {
 	defer s.indexMtx.Unlock()
 
 	chanID := link.ChanID()
+	log.Infof("addlinkkkkk")
 
 	// Get and attach the mailbox for this link, which buffers packets in
 	// case there packets that we tried to deliver while this link was
@@ -1741,7 +1748,7 @@ func (s *Switch) AddLink(link ChannelLink) error {
 
 		s.pendingLinkIndex[chanID] = link
 	} else {
-		log.Infof("Adding live link chan_id=%v, short_chan_id=%v",
+		log.Infof("Adding live link chan_id=%x, short_chan_id=%x",
 			chanID, shortChanID)
 
 		s.addLiveLink(link)
@@ -1767,8 +1774,10 @@ func (s *Switch) addLiveLink(link ChannelLink) {
 	// quickly look up all the channels for a particular node.
 	peerPub := link.Peer().PubKey()
 	if _, ok := s.interfaceIndex[peerPub]; !ok {
+		log.Infof("add peer pub %v", peerPub)
 		s.interfaceIndex[peerPub] = make(map[ChannelLink]struct{})
 	}
+	log.Infof("add peer pub2 %v", peerPub)
 	s.interfaceIndex[peerPub][link] = struct{}{}
 }
 
